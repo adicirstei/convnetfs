@@ -1,0 +1,8 @@
+packages
+build
+bin
+obj
+deploy
+.fake
+.VS
+*.net
