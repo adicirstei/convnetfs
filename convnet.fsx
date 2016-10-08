@@ -62,9 +62,9 @@ type FullyConnCore = {
 } 
 
 type DropoutCore = {
-  forward : Forward
-  backward : Backward
-  getParamsAndGrads : unit -> ParamsGrads list
+  forward : Forward<DropoutCore>
+  backward : Backward<DropoutCore>
+  getParamsAndGrads : GetParamsAndGrads<DropoutCore>
 
   outSx : int
   outSy : int
@@ -77,9 +77,9 @@ type DropoutCore = {
 } 
 
 type SoftmaxCore = {
-  forward : Forward
-  backward : Backward
-  getParamsAndGrads : unit -> ParamsGrads list
+  forward : Forward<SoftmaxCore>
+  backward : Backward<SoftmaxCore>
+  getParamsAndGrads : GetParamsAndGrads<SoftmaxCore>
 
 
   numInputs : int
@@ -98,9 +98,9 @@ type SoftmaxCore = {
 
 
 type RegressionCore = {
-  forward : Forward
-  backward : Backward
-  getParamsAndGrads : unit -> ParamsGrads list
+  forward : Forward<RegressionCore>
+  backward : Backward<RegressionCore>
+  getParamsAndGrads : GetParamsAndGrads<RegressionCore>
 
 
   numInputs : int
@@ -118,9 +118,9 @@ type RegressionCore = {
 } 
 
 type SVMCore = {
-  forward : Forward
-  backward : Backward
-  getParamsAndGrads : unit -> ParamsGrads list
+  forward : Forward<SVMCore>
+  backward : Backward<SVMCore>
+  getParamsAndGrads : GetParamsAndGrads<SVMCore>
 
 
   numInputs : int
@@ -138,9 +138,9 @@ type SVMCore = {
 } 
 
 type ReluCore = {
-  forward : Forward
-  backward : Backward
-  getParamsAndGrads : unit -> ParamsGrads list
+  forward : Forward<ReluCore>
+  backward : Backward<ReluCore>
+  getParamsAndGrads : GetParamsAndGrads<ReluCore>
 
   outSx : int
   outSy : int
@@ -159,30 +159,31 @@ type SigmoidCore = {
   outSy : int
 
   outDepth : int 
+
   inAct : Vol
   outAct : Vol
 } 
 
 type MaxoutCore = {
-  forward : Forward
-  backward : Backward
-  getParamsAndGrads : unit -> ParamsGrads list
+  forward : Forward<MaxoutCore>
+  backward : Backward<MaxoutCore>
+  getParamsAndGrads : GetParamsAndGrads<MaxoutCore>
 
   outSx : int
   outSy : int
   groupSize : int
   outDepth : int 
 
-  switches : float []
+  switches : int []
 
   inAct : Vol
   outAct : Vol
 } 
 
 type TanhCore = {
-  forward : Forward
-  backward : Backward
-  getParamsAndGrads : unit -> ParamsGrads list
+  forward : Forward<TanhCore>
+  backward : Backward<TanhCore>
+  getParamsAndGrads : GetParamsAndGrads<TanhCore>
 
   outSx : int
   outSy : int
@@ -193,9 +194,9 @@ type TanhCore = {
 } 
 
 type LocalResponseNormalizationCore = {
-  forward : Forward
-  backward : Backward
-  getParamsAndGrads : unit -> ParamsGrads list
+  forward : Forward<LocalResponseNormalizationCore>
+  backward : Backward<LocalResponseNormalizationCore>
+  getParamsAndGrads : GetParamsAndGrads<LocalResponseNormalizationCore>
 
 
   k : int
@@ -212,9 +213,9 @@ type LocalResponseNormalizationCore = {
 } 
 
 type PoolCore = {
-  forward : Forward
-  backward : Backward
-  getParamsAndGrads : unit -> ParamsGrads list
+  forward : Forward<PoolCore>
+  backward : Backward<PoolCore>
+  getParamsAndGrads : GetParamsAndGrads<PoolCore>
 
   sx : int
   inDepth : int
