@@ -250,4 +250,4 @@ type LayerType =
   | TanhLayer of TanhCore
   | LocalResponseNormalizationLayer of LocalResponseNormalizationCore
   | PoolLayer of PoolCore
-
+ 
