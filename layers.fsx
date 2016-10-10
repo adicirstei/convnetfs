@@ -93,21 +93,42 @@ module Relu =
 
 module Maxout =
   let backward (core:MaxoutCore) = 
-    if core.outSx = 1 && core.outSx = 1 then
-      let a = Array3D.map (fun (w, dw) -> (w, 0.0)) core.inAct
+    let a = Array3D.map (fun (w, dw) -> (w, 0.0)) core.inAct
+    Array3D.iteri (fun x y d (w,dw) -> a.[x,y,d] <- w, 0.0) a
+    if core.outSx = 1 && core.outSy = 1 then
+      
       Array.iteri (fun i sw -> a.[0,0,sw] <- (fst a.[0,0,sw], snd core.outAct.[0,0,i]) ) core.switches
 
       { core with 
           inAct = a
       }
     else
-      core
+      Array3D.iteri (fun x y d (w, dw) -> 
+                      let sw = core.switches.[(core.outSx * core.outSy *d) + x * core.outSy + y]
+                      a.[x,y,sw] <- (fst a.[x,y,sw]) , (snd core.outAct.[x,y,d])  ) core.outAct
+      { core with 
+          inAct = a
+      }
 
 
-  let forward (core:MaxoutCore) (vol:Vol) (training:bool) = 
+  let forward (core:MaxoutCore) (v:Vol) (training:bool) = 
+    let v2 = Vol.constCreate core.outSx core.outSy core.outDepth 0.0
+    
+    Array3D.iteri (fun x y i (w,dw) -> 
+      let ix = i * core.groupSize
+      let a = Vol.get v x y ix
+      let ai = 0
+      // de calculat maximul local intr-un grup
+
+
+      Vol.set v2 x y i a
+      core.switches.[core.outSx * core.outSy * i + y * core.outSx + y] <- ix + ai
+    ) core.inAct
+
+
     { core with 
-        inAct = vol
-        outAct = Array3D.map (fun (w, dw) -> (if w < 0.0 then 0.0 else w ), dw ) vol
+        inAct = v
+        outAct = Array3D.map (fun (w, dw) -> (if w < 0.0 then 0.0 else w ), dw ) v
     }
 
   let getParamsAndGrads (core:MaxoutCore) = 
@@ -132,3 +153,4 @@ module Maxout =
       inAct = emptyVol
       outAct = emptyVol
     }
+
