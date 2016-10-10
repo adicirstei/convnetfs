@@ -151,3 +151,35 @@ module Maxout =
       outAct = emptyVol
     }
 
+module Tanh =
+  let backward (core:TanhCore) = 
+    let v2 = core.outAct
+
+    { core with
+        inAct = Array3D.map (fun (w,dw) -> (w, (1.0 - w * w) * dw )) v2 
+    }
+
+  let forward (core:TanhCore) (vol:Vol) (training:bool) = 
+    let v2 = Array3D.map (fun (w, dw) -> tanh w, dw ) (Vol.cloneAndZero vol)
+    { core with 
+        inAct = vol
+        outAct = v2
+    }
+
+  let getParamsAndGrads (core:TanhCore) = 
+    []
+
+  let create outSx outSy outDepth = 
+    TanhLayer {
+      forward = forward
+      backward = backward
+      getParamsAndGrads = getParamsAndGrads
+
+      outDepth = outDepth
+      outSx = outSx
+      outSy = outSy
+
+      inAct = emptyVol
+      outAct = emptyVol
+    }
+
