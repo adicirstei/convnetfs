@@ -37,3 +37,11 @@ let setConst (vol: Vol) a =
   vol
   |> Array3D.iteri (fun x y d (w,dw) -> vol.[x,y,d] <- (a, dw)) 
 
+let rec maxDim3 (vol:Vol) x y r =
+  match r with 
+  | [] -> failwith "The range must be non empty"
+  | [h] -> (vol.[x,y,h], h)
+  | h :: t -> 
+    let mt, mti =  maxDim3 vol x y t
+    if vol.[x,y,h] > mt then (vol.[x,y,h], h)
+    else mt, mti

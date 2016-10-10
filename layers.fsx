@@ -116,15 +116,12 @@ module Maxout =
     
     Array3D.iteri (fun x y i (w,dw) -> 
       let ix = i * core.groupSize
-      let a = Vol.get v x y ix
-      let ai = 0
-      // de calculat maximul local intr-un grup
-
+      let ((a,wa),ai) = Vol.maxDim3 v x y [ix..ix+core.groupSize-1]
 
       Vol.set v2 x y i a
-      core.switches.[core.outSx * core.outSy * i + y * core.outSx + y] <- ix + ai
+      core.switches.[core.outSx * core.outSy * i + y * core.outSx + y] <- ai
     ) core.inAct
-
+ 
 
     { core with 
         inAct = v
