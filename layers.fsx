@@ -200,8 +200,11 @@ module FullyConnected =
       |> Array3D.mapi (fun _ _ i (w,dw) ->
         let wi = Vol.getWs core.filters.[i]
         let bi = Vol.get core.biases 0 0 i 
-        //let newW = Vol.map2 (*) vw wi |> Vol.fold (+)
-        (bi, dw)
+        let newW = 
+          Vol.map2 (*) vw wi 
+          |> Vol.flatten
+          |> Seq.sum
+        (bi + newW, dw)
       )
     
     { core with 

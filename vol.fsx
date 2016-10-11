@@ -58,4 +58,5 @@ let map2 m (a: 'a [,,]) (b:'b [,,]) =
   Array3D.mapi (fun x y z v -> m v (b.[x,y,z])) a
 
 
-// let fold fn z (a: a'[,,]) = 
+let flatten (a: 'a [,,]) = 
+  Seq.cast<'a> a
