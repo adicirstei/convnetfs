@@ -45,3 +45,17 @@ let rec maxDim3 (vol:Vol) x y r =
     let mt, mti =  maxDim3 vol x y t
     if vol.[x,y,h] > mt then (vol.[x,y,h], h)
     else mt, mti
+
+
+let getWs (v:Vol) = 
+  Array3D.map (fun (w,dw) -> w) v
+
+let getDWs (v:Vol) = 
+  Array3D.map (fun (w,dw) -> dw) v
+
+
+let map2 m (a: 'a [,,]) (b:'b [,,]) = 
+  Array3D.mapi (fun x y z v -> m v (b.[x,y,z])) a
+
+
+// let fold fn z (a: a'[,,]) = 

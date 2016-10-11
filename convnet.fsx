@@ -4,8 +4,8 @@ type Vol = T [,,]
 let emptyVol:Vol = Array3D.zeroCreate<T> 0 0 0
 
 type ParamsGrads = {
-  params : Vol
-  grads: Vol
+  params : float [,,]
+  grads: float [,,]
   l1DecayMul : float
   l2DecayMul : float
 }

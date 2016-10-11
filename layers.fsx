@@ -191,14 +191,29 @@ module FullyConnected =
         inAct = Array3D.map (fun (w,dw) -> (w, (if dw <= 0.0 then 0.0 else dw ))) v2 
     }
 
+ 
+
   let forward (core:FullyConnCore) (vol:Vol) (training:bool) = 
+    let vw = Vol.getWs vol
+    let a = 
+      Vol.constCreate 1 1 core.outDepth 0.0
+      |> Array3D.mapi (fun _ _ i (w,dw) ->
+        let wi = Vol.getWs core.filters.[i]
+        let bi = Vol.get core.biases 0 0 i 
+        //let newW = Vol.map2 (*) vw wi |> Vol.fold (+)
+        (bi, dw)
+      )
+    
     { core with 
         inAct = vol
-        outAct = Array3D.map (fun (w, dw) -> (if w < 0.0 then 0.0 else w ), dw ) vol
+        outAct = a
     }
 
   let getParamsAndGrads (core:FullyConnCore) = 
-    []
+    let pg = 
+      core.filters
+      |> List.map (fun f -> { params = Vol.getWs f; grads = Vol.getDWs f; l1DecayMul = core.l1DecayMul; l2DecayMul = core.l2DecayMul })
+    pg @ [{ params = Vol.getWs core.biases; grads = Vol.getDWs core.biases; l1DecayMul = 0.0; l2DecayMul = 0.0 }]
     
   let create outDepth l1DecMul l2DecMul inSx inSy inDepth bias = 
     FullyConnLayer {
