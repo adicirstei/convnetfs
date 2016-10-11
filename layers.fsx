@@ -125,7 +125,7 @@ module Maxout =
 
     { core with 
         inAct = v
-        outAct = Array3D.map (fun (w, dw) -> (if w < 0.0 then 0.0 else w ), dw ) v
+        outAct = Array3D.map (fun (w, dw) -> (if w < 0.0 then 0.0 else w ), dw ) v2
     }
 
   let getParamsAndGrads (core:MaxoutCore) = 
