@@ -4,8 +4,8 @@ type Vol = T [,,]
 let emptyVol:Vol = Array3D.zeroCreate<T> 0 0 0
 
 type ParamsGrads = {
-  params : float
-  grads: float
+  params : Vol
+  grads: Vol
   l1DecayMul : float
   l2DecayMul : float
 }
@@ -45,6 +45,9 @@ type ConvCore = {
   outSy : int
   filters : Vol list
   biases : Vol
+
+  inAct : Vol
+  outAct : Vol
 } 
 
 type FullyConnCore = {
@@ -59,6 +62,8 @@ type FullyConnCore = {
   outSy : int
   filters : Vol list
   biases : Vol
+  inAct : Vol
+  outAct : Vol
 } 
 
 type DropoutCore = {

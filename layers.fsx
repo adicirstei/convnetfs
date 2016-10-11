@@ -183,3 +183,40 @@ module Tanh =
       outAct = emptyVol
     }
 
+module FullyConnected =
+  let backward (core:FullyConnCore) = 
+    let v2 = core.outAct
+
+    { core with
+        inAct = Array3D.map (fun (w,dw) -> (w, (if dw <= 0.0 then 0.0 else dw ))) v2 
+    }
+
+  let forward (core:FullyConnCore) (vol:Vol) (training:bool) = 
+    { core with 
+        inAct = vol
+        outAct = Array3D.map (fun (w, dw) -> (if w < 0.0 then 0.0 else w ), dw ) vol
+    }
+
+  let getParamsAndGrads (core:FullyConnCore) = 
+    []
+    
+  let create outDepth l1DecMul l2DecMul inSx inSy inDepth bias = 
+    FullyConnLayer {
+      forward = forward
+      backward = backward
+      getParamsAndGrads = getParamsAndGrads
+
+      outDepth = outDepth
+
+      numInputs = inSx * inSy * inDepth
+      outSx = 1
+      outSy = 1
+      l1DecayMul = l1DecMul
+      l2DecayMul = l2DecMul
+
+      filters = [1..outDepth] |> List.map (fun _ ->  Vol.randCreate 1 1 (inSx * inSy * inDepth))
+      biases = Vol.constCreate 1 1 outDepth bias
+
+      inAct = emptyVol
+      outAct = emptyVol
+    }
