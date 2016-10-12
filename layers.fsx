@@ -5,16 +5,13 @@ open Convnet
 module Input =
   let backward (core:InputCore) = 
     core
-
   let forward (core:InputCore) (vol:Vol) (training:bool) = 
     { core with 
         inAct = vol
         outAct = vol
     }
-
   let getParamsAndGrads (core:InputCore) = 
     []
-
   let create outDepth outSx outSy = 
     InputLayer {
       forward = forward
@@ -44,7 +41,6 @@ module Sigmoid =
 
   let getParamsAndGrads (core:SigmoidCore) = 
     []
-
   let create outSx outSy outDepth = 
     SigmoidLayer {
       forward = forward
