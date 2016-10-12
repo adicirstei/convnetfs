@@ -185,10 +185,28 @@ module Tanh =
 
 module FullyConnected =
   let backward (core:FullyConnCore) = 
-    let v2 = core.outAct
+    let v = 
+      core.inAct
+      |> Array3D.map (fun (w,_) -> (w, 0.0))
 
     { core with
-        inAct = Array3D.map (fun (w,dw) -> (w, (if dw <= 0.0 then 0.0 else dw ))) v2 
+        inAct = Array3D.mapi (fun x y i (w,dw) -> 
+          let chg = snd core.outAct.[x,y,i]
+          let tfi = core.filters.[i]
+          let tfiw = 
+            Vol.getWs tfi 
+            |> Vol.flatten
+            |> Seq.sumBy (fun w -> w*chg)
+
+          w, dw
+        )  v  /// to implement
+        filters  = List.mapi (fun i f -> 
+          Array3D.mapi (fun x y d (w, dw) -> w, dw + (fst core.inAct.[x,y,d]) * (snd core.outAct.[0,0,i])) f
+        ) core.filters
+
+        biases = Array3D.mapi (fun x y i (w, dw) -> 
+          let (bw, bdw) = core.biases.[x,y,i]
+          (bw, bdw + dw) ) core.outAct  
     }
 
  
