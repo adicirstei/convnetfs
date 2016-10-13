@@ -3,111 +3,124 @@
 open Convnet
 
 module Input =
-  let backward (core:InputCore) = 
+  let backward (core:Core) = 
     core
-  let forward (core:InputCore) (vol:Vol) (training:bool) = 
-    { core with 
+  let forward (core:Core) (vol:Vol) (training:bool) = 
+    let (InputCore c) = core
+    InputCore { c with 
         inAct = vol
         outAct = vol
     }
-  let getParamsAndGrads (core:InputCore) = 
+  let getParamsAndGrads (core:Core) = 
     []
   let create outDepth outSx outSy = 
-    InputLayer {
+    {
       forward = forward
       backward = backward
       getParamsAndGrads = getParamsAndGrads
-      outDepth = outDepth
-      outSx = outSx
-      outSy = outSy
-      inAct = emptyVol
-      outAct = emptyVol
+      data = 
+        InputCore {
+          outDepth = outDepth
+          outSx = outSx
+          outSy = outSy
+          inAct = emptyVol
+          outAct = emptyVol
+        }
     }
-
 module Sigmoid =
-  let backward (core:SigmoidCore) = 
+  let backward c = 
+    let (SigmoidCore core) = c
     let v2 = core.outAct
 
-    { core with
-        inAct = Array3D.map (fun (w,dw) -> (w, w * (1.0 - w) * dw )) v2 
+    SigmoidCore { core with
+      inAct = Array3D.map (fun (w,dw) -> (w, w * (1.0 - w) * dw )) v2 
     }
 
-  let forward (core:SigmoidCore) (vol:Vol) (training:bool) = 
+  let forward c (vol:Vol) (training:bool) = 
+    let (SigmoidCore core) = c
     let v2 = Array3D.map (fun (w, dw) -> 1.0 / (1.0 + exp (-w)), dw ) vol
-    { core with 
+    SigmoidCore { core with 
         inAct = vol
         outAct = v2
     }
 
-  let getParamsAndGrads (core:SigmoidCore) = 
+  let getParamsAndGrads (core:Core) = 
     []
   let create outSx outSy outDepth = 
-    SigmoidLayer {
+    {
       forward = forward
       backward = backward
       getParamsAndGrads = getParamsAndGrads
 
-      outDepth = outDepth
-      outSx = outSx
-      outSy = outSy
+      data = 
+        SigmoidCore { 
+          outDepth = outDepth
+          outSx = outSx
+          outSy = outSy
 
-      inAct = emptyVol
-      outAct = emptyVol
+          inAct = emptyVol
+          outAct = emptyVol
+        }
     }
 
 
 module Relu =
-  let backward (core:ReluCore) = 
+  let backward c = 
+    let (ReluCore core) = c
     let v2 = core.outAct
 
-    { core with
-        inAct = Array3D.map (fun (w,dw) -> (w, (if dw <= 0.0 then 0.0 else dw ))) v2 
+    ReluCore { core with
+      inAct = Array3D.map (fun (w,dw) -> (w, (if dw <= 0.0 then 0.0 else dw ))) v2 
     }
 
-  let forward (core:ReluCore) (vol:Vol) (training:bool) = 
-    { core with 
-        inAct = vol
-        outAct = Array3D.map (fun (w, dw) -> (if w < 0.0 then 0.0 else w ), dw ) vol
+  let forward c (vol:Vol) (training:bool) = 
+    let (ReluCore core) = c
+    ReluCore { core with 
+      inAct = vol
+      outAct = Array3D.map (fun (w, dw) -> (if w < 0.0 then 0.0 else w ), dw ) vol
     }
 
-  let getParamsAndGrads (core:ReluCore) = 
+  let getParamsAndGrads (core:Core) = 
     []
 
   let create outSx outSy outDepth = 
-    ReluLayer {
+    {
       forward = forward
       backward = backward
       getParamsAndGrads = getParamsAndGrads
+      data = ReluCore {
+        outDepth = outDepth
+        outSx = outSx
+        outSy = outSy
 
-      outDepth = outDepth
-      outSx = outSx
-      outSy = outSy
-
-      inAct = emptyVol
-      outAct = emptyVol
+        inAct = emptyVol
+        outAct = emptyVol
+      }
     }
 
 module Maxout =
-  let backward (core:MaxoutCore) = 
+  let backward c = 
+    let (MaxoutCore core) = c
     let a = Array3D.map (fun (w, dw) -> (w, 0.0)) core.inAct
     Array3D.iteri (fun x y d (w,dw) -> a.[x,y,d] <- w, 0.0) a
     if core.outSx = 1 && core.outSy = 1 then
       
       Array.iteri (fun i sw -> a.[0,0,sw] <- (fst a.[0,0,sw], snd core.outAct.[0,0,i]) ) core.switches
 
-      { core with 
-          inAct = a
+      MaxoutCore { core with 
+        inAct = a
       }
     else
       Array3D.iteri (fun x y d (w, dw) -> 
                       let sw = core.switches.[(core.outSx * core.outSy *d) + x * core.outSy + y]
                       a.[x,y,sw] <- (fst a.[x,y,sw]) , (snd core.outAct.[x,y,d])  ) core.outAct
-      { core with 
-          inAct = a
+      MaxoutCore { core with 
+        inAct = a
       }
 
 
-  let forward (core:MaxoutCore) (v:Vol) (training:bool) = 
+  let forward c (v:Vol) (training:bool) = 
+    let (MaxoutCore core) = c
     let v2 = Vol.constCreate core.outSx core.outSy core.outDepth 0.0
     
     Array3D.iteri (fun x y i (w,dw) -> 
@@ -119,73 +132,78 @@ module Maxout =
     ) core.inAct
  
 
-    { core with 
-        inAct = v
-        outAct = Array3D.map (fun (w, dw) -> (if w < 0.0 then 0.0 else w ), dw ) v2
+    MaxoutCore { core with 
+      inAct = v
+      outAct = Array3D.map (fun (w, dw) -> (if w < 0.0 then 0.0 else w ), dw ) v2
     }
 
-  let getParamsAndGrads (core:MaxoutCore) = 
+  let getParamsAndGrads (core:Core) = 
     []
 
   let create inSx inSy inDepth groupSize = 
     let od = int (inDepth / groupSize)
-    MaxoutLayer {
+    {
 
       forward = forward
       backward = backward
       getParamsAndGrads = getParamsAndGrads
 
+      data = MaxoutCore {
+        groupSize = groupSize
+        outSx = inSx
+        outSy = inSy
 
-      groupSize = groupSize
-      outSx = inSx
-      outSy = inSy
+        outDepth = od
+        switches = Array.zeroCreate<int> (inSx * inSy * od)
 
-      outDepth = od
-      switches = Array.zeroCreate<int> (inSx * inSy * od)
-
-      inAct = emptyVol
-      outAct = emptyVol
+        inAct = emptyVol
+        outAct = emptyVol
+      }
     }
 
 module Tanh =
-  let backward (core:TanhCore) = 
+  let backward c = 
+    let (TanhCore core) = c
     let v2 = core.outAct
 
-    { core with
-        inAct = Array3D.map (fun (w,dw) -> (w, (1.0 - w * w) * dw )) v2 
+    TanhCore { core with
+      inAct = Array3D.map (fun (w,dw) -> (w, (1.0 - w * w) * dw )) v2 
     }
 
-  let forward (core:TanhCore) (vol:Vol) (training:bool) = 
+  let forward c (vol:Vol) (training:bool) = 
+    let (TanhCore core) = c
     let v2 = Array3D.map (fun (w, dw) -> tanh w, dw ) (Vol.cloneAndZero vol)
-    { core with 
-        inAct = vol
-        outAct = v2
+    TanhCore { core with 
+      inAct = vol
+      outAct = v2
     }
 
-  let getParamsAndGrads (core:TanhCore) = 
+  let getParamsAndGrads (core:Core) = 
     []
 
   let create outSx outSy outDepth = 
-    TanhLayer {
+    {
       forward = forward
       backward = backward
       getParamsAndGrads = getParamsAndGrads
+      data = TanhCore {
+        outDepth = outDepth
+        outSx = outSx
+        outSy = outSy
 
-      outDepth = outDepth
-      outSx = outSx
-      outSy = outSy
-
-      inAct = emptyVol
-      outAct = emptyVol
+        inAct = emptyVol
+        outAct = emptyVol
+      }
     }
 
 module FullyConnected =
-  let backward (core:FullyConnCore) = 
+  let backward c = 
+    let (FullyConnCore core) = c
     let v = 
       core.inAct
       |> Array3D.map (fun (w,_) -> (w, 0.0))
 
-    { core with
+    FullyConnCore { core with
         inAct = Array3D.mapi (fun x y i (w,dw) -> 
           let chg = snd core.outAct.[x,y,i]
           let tfi = core.filters.[i]
@@ -203,11 +221,13 @@ module FullyConnected =
         biases = Array3D.mapi (fun x y i (w, dw) -> 
           let (bw, bdw) = core.biases.[x,y,i]
           (bw, bdw + dw) ) core.outAct  
+      
     }
 
  
 
-  let forward (core:FullyConnCore) (vol:Vol) (training:bool) = 
+  let forward c (vol:Vol) (training:bool) = 
+    let (FullyConnCore core) = c
     let vw = Vol.getWs vol
     let a = 
       Vol.constCreate 1 1 core.outDepth 0.0
@@ -221,34 +241,36 @@ module FullyConnected =
         (bi + newW, dw)
       )
     
-    { core with 
-        inAct = vol
-        outAct = a
+    FullyConnCore { core with 
+      inAct = vol
+      outAct = a
     }
 
-  let getParamsAndGrads (core:FullyConnCore) = 
+  let getParamsAndGrads c = 
+    let (FullyConnCore core) = c
     let pg = 
       core.filters
       |> List.map (fun f -> { params = Vol.getWs f; grads = Vol.getDWs f; l1DecayMul = core.l1DecayMul; l2DecayMul = core.l2DecayMul })
     pg @ [{ params = Vol.getWs core.biases; grads = Vol.getDWs core.biases; l1DecayMul = 0.0; l2DecayMul = 0.0 }]
     
   let create outDepth l1DecMul l2DecMul inSx inSy inDepth bias = 
-    FullyConnLayer {
+    {
       forward = forward
       backward = backward
       getParamsAndGrads = getParamsAndGrads
+      data = FullyConnCore {
+        outDepth = outDepth
 
-      outDepth = outDepth
+        numInputs = inSx * inSy * inDepth
+        outSx = 1
+        outSy = 1
+        l1DecayMul = l1DecMul
+        l2DecayMul = l2DecMul
 
-      numInputs = inSx * inSy * inDepth
-      outSx = 1
-      outSy = 1
-      l1DecayMul = l1DecMul
-      l2DecayMul = l2DecMul
+        filters = [1..outDepth] |> List.map (fun _ ->  Vol.randCreate 1 1 (inSx * inSy * inDepth))
+        biases = Vol.constCreate 1 1 outDepth bias
 
-      filters = [1..outDepth] |> List.map (fun _ ->  Vol.randCreate 1 1 (inSx * inSy * inDepth))
-      biases = Vol.constCreate 1 1 outDepth bias
-
-      inAct = emptyVol
-      outAct = emptyVol
+        inAct = emptyVol
+        outAct = emptyVol
+      }
     }

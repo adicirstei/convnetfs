@@ -10,16 +10,8 @@ type ParamsGrads = {
   l2DecayMul : float
 }
 
-type Forward<'Core> = 'Core -> Vol -> bool -> 'Core
-type Backward<'Core> = 'Core -> 'Core
-type GetParamsAndGrads<'Core> = 'Core -> ParamsGrads list
-
-
 
 type InputCore = {
-  forward : Forward<InputCore>
-  backward : Backward<InputCore>
-  getParamsAndGrads : GetParamsAndGrads<InputCore>
   outDepth : int
   outSx : int
   outSy : int
@@ -28,9 +20,7 @@ type InputCore = {
 } 
 
 type ConvCore = {
-  forward : Forward<ConvCore>
-  backward : Backward<ConvCore>
-  getParamsAndGrads : GetParamsAndGrads<ConvCore>
+
   outDepth : int 
   sx : int
   inDepth : int
@@ -51,9 +41,7 @@ type ConvCore = {
 } 
 
 type FullyConnCore = {
-  forward : Forward<FullyConnCore>
-  backward : Backward<FullyConnCore>
-  getParamsAndGrads : GetParamsAndGrads<FullyConnCore>
+
   outDepth : int
   l1DecayMul : float
   l2DecayMul : float
@@ -67,9 +55,7 @@ type FullyConnCore = {
 } 
 
 type DropoutCore = {
-  forward : Forward<DropoutCore>
-  backward : Backward<DropoutCore>
-  getParamsAndGrads : GetParamsAndGrads<DropoutCore>
+
 
   outSx : int
   outSy : int
@@ -82,9 +68,7 @@ type DropoutCore = {
 } 
 
 type SoftmaxCore = {
-  forward : Forward<SoftmaxCore>
-  backward : Backward<SoftmaxCore>
-  getParamsAndGrads : GetParamsAndGrads<SoftmaxCore>
+
 
 
   numInputs : int
@@ -103,9 +87,7 @@ type SoftmaxCore = {
 
 
 type RegressionCore = {
-  forward : Forward<RegressionCore>
-  backward : Backward<RegressionCore>
-  getParamsAndGrads : GetParamsAndGrads<RegressionCore>
+
 
 
   numInputs : int
@@ -123,9 +105,7 @@ type RegressionCore = {
 } 
 
 type SVMCore = {
-  forward : Forward<SVMCore>
-  backward : Backward<SVMCore>
-  getParamsAndGrads : GetParamsAndGrads<SVMCore>
+
 
 
   numInputs : int
@@ -143,9 +123,7 @@ type SVMCore = {
 } 
 
 type ReluCore = {
-  forward : Forward<ReluCore>
-  backward : Backward<ReluCore>
-  getParamsAndGrads : GetParamsAndGrads<ReluCore>
+
 
   outSx : int
   outSy : int
@@ -156,9 +134,7 @@ type ReluCore = {
 } 
 
 type SigmoidCore = {
-  forward : Forward<SigmoidCore>
-  backward : Backward<SigmoidCore>
-  getParamsAndGrads : GetParamsAndGrads<SigmoidCore>
+
 
   outSx : int
   outSy : int
@@ -170,9 +146,7 @@ type SigmoidCore = {
 } 
 
 type MaxoutCore = {
-  forward : Forward<MaxoutCore>
-  backward : Backward<MaxoutCore>
-  getParamsAndGrads : GetParamsAndGrads<MaxoutCore>
+
 
   outSx : int
   outSy : int
@@ -186,9 +160,7 @@ type MaxoutCore = {
 } 
 
 type TanhCore = {
-  forward : Forward<TanhCore>
-  backward : Backward<TanhCore>
-  getParamsAndGrads : GetParamsAndGrads<TanhCore>
+
 
   outSx : int
   outSy : int
@@ -199,9 +171,7 @@ type TanhCore = {
 } 
 
 type LocalResponseNormalizationCore = {
-  forward : Forward<LocalResponseNormalizationCore>
-  backward : Backward<LocalResponseNormalizationCore>
-  getParamsAndGrads : GetParamsAndGrads<LocalResponseNormalizationCore>
+
 
 
   k : int
@@ -218,9 +188,7 @@ type LocalResponseNormalizationCore = {
 } 
 
 type PoolCore = {
-  forward : Forward<PoolCore>
-  backward : Backward<PoolCore>
-  getParamsAndGrads : GetParamsAndGrads<PoolCore>
+
 
   sx : int
   inDepth : int
@@ -241,18 +209,29 @@ type PoolCore = {
   switchy : float []
 } 
 
-type LayerType = 
-  | ConvLayer of ConvCore
-  | FullyConnLayer of FullyConnCore
-  | DropoutLayer of DropoutCore
-  | InputLayer of InputCore
-  | SoftmaxLayer of SoftmaxCore
-  | RegressionLayer of RegressionCore
-  | SVMLayer  of SVMCore
-  | ReluLayer of ReluCore
-  | SigmoidLayer  of SigmoidCore
-  | MaxoutLayer  of MaxoutCore
-  | TanhLayer of TanhCore
-  | LocalResponseNormalizationLayer of LocalResponseNormalizationCore
-  | PoolLayer of PoolCore
+type Core =
+  | ConvCore of ConvCore
+  | FullyConnCore of FullyConnCore
+  | DropoutCore of DropoutCore
+  | InputCore of InputCore
+  | SoftmaxCore of SoftmaxCore
+  | RegressionCore of RegressionCore
+  | SVMCore of SVMCore
+  | ReluCore of ReluCore
+  | SigmoidCore of SigmoidCore
+  | MaxoutCore of MaxoutCore
+  | TanhCore of TanhCore
+  | LocalResponseNormalizationCore of LocalResponseNormalizationCore
+  | PoolCore of PoolCore
  
+type Forward = Core -> Vol -> bool -> Core
+type Backward = Core -> Core
+type GetParamsAndGrads = Core -> ParamsGrads list
+
+
+type LayerType = {
+  forward : Forward
+  backward : Backward
+  getParamsAndGrads : GetParamsAndGrads
+  data : Core
+}
