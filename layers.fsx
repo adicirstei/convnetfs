@@ -3,14 +3,14 @@
 open Convnet
 
 module Input =
-  let backward (core:Core) = 
-    core
-  let forward (core:Core) (vol:Vol) (training:bool) = 
+  let backward (core:Core) yo = 
+    core, None
+  let forward (core:Core) (vol:Vol) = 
     let (InputCore c) = core
     InputCore { c with 
         inAct = vol
         outAct = vol
-    }
+    }, vol
   let getParamsAndGrads (core:Core) = 
     []
   let create outDepth outSx outSy = 
@@ -28,21 +28,21 @@ module Input =
         }
     }
 module Sigmoid =
-  let backward c = 
+  let backward c yo = 
     let (SigmoidCore core) = c
     let v2 = core.outAct
 
     SigmoidCore { core with
       inAct = Array3D.map (fun (w,dw) -> (w, w * (1.0 - w) * dw )) v2 
-    }
+    }, None
 
-  let forward c (vol:Vol) (training:bool) = 
+  let forward c (vol:Vol) = 
     let (SigmoidCore core) = c
     let v2 = Array3D.map (fun (w, dw) -> 1.0 / (1.0 + exp (-w)), dw ) vol
     SigmoidCore { core with 
         inAct = vol
         outAct = v2
-    }
+    }, v2
 
   let getParamsAndGrads (core:Core) = 
     []
@@ -65,20 +65,21 @@ module Sigmoid =
 
 
 module Relu =
-  let backward c = 
+  let backward c yo = 
     let (ReluCore core) = c
     let v2 = core.outAct
 
     ReluCore { core with
       inAct = Array3D.map (fun (w,dw) -> (w, (if dw <= 0.0 then 0.0 else dw ))) v2 
-    }
+    }, None
 
-  let forward c (vol:Vol) (training:bool) = 
+  let forward c (vol:Vol) = 
     let (ReluCore core) = c
+    let v2 = Array3D.map (fun (w, dw) -> (if w < 0.0 then 0.0 else w ), dw ) vol
     ReluCore { core with 
       inAct = vol
-      outAct = Array3D.map (fun (w, dw) -> (if w < 0.0 then 0.0 else w ), dw ) vol
-    }
+      outAct = v2
+    }, v2
 
   let getParamsAndGrads (core:Core) = 
     []
@@ -99,7 +100,7 @@ module Relu =
     }
 
 module Maxout =
-  let backward c = 
+  let backward c yo = 
     let (MaxoutCore core) = c
     let a = Array3D.map (fun (w, dw) -> (w, 0.0)) core.inAct
     Array3D.iteri (fun x y d (w,dw) -> a.[x,y,d] <- w, 0.0) a
@@ -109,17 +110,17 @@ module Maxout =
 
       MaxoutCore { core with 
         inAct = a
-      }
+      }, None
     else
       Array3D.iteri (fun x y d (w, dw) -> 
                       let sw = core.switches.[(core.outSx * core.outSy *d) + x * core.outSy + y]
                       a.[x,y,sw] <- (fst a.[x,y,sw]) , (snd core.outAct.[x,y,d])  ) core.outAct
       MaxoutCore { core with 
         inAct = a
-      }
+      }, None
 
 
-  let forward c (v:Vol) (training:bool) = 
+  let forward c (v:Vol) = 
     let (MaxoutCore core) = c
     let v2 = Vol.constCreate core.outSx core.outSy core.outDepth 0.0
     
@@ -131,11 +132,11 @@ module Maxout =
       core.switches.[core.outSx * core.outSy * i + y * core.outSx + y] <- ai
     ) core.inAct
  
-
+    let v3 = Array3D.map (fun (w, dw) -> (if w < 0.0 then 0.0 else w ), dw ) v2
     MaxoutCore { core with 
       inAct = v
-      outAct = Array3D.map (fun (w, dw) -> (if w < 0.0 then 0.0 else w ), dw ) v2
-    }
+      outAct = v3
+    }, v3
 
   let getParamsAndGrads (core:Core) = 
     []
@@ -162,21 +163,21 @@ module Maxout =
     }
 
 module Tanh =
-  let backward c = 
+  let backward c yo = 
     let (TanhCore core) = c
     let v2 = core.outAct
 
     TanhCore { core with
       inAct = Array3D.map (fun (w,dw) -> (w, (1.0 - w * w) * dw )) v2 
-    }
+    }, None
 
-  let forward c (vol:Vol) (training:bool) = 
+  let forward c (vol:Vol) = 
     let (TanhCore core) = c
     let v2 = Array3D.map (fun (w, dw) -> tanh w, dw ) (Vol.cloneAndZero vol)
     TanhCore { core with 
       inAct = vol
       outAct = v2
-    }
+    }, v2
 
   let getParamsAndGrads (core:Core) = 
     []
@@ -197,7 +198,7 @@ module Tanh =
     }
 
 module FullyConnected =
-  let backward c = 
+  let backward c yo = 
     let (FullyConnCore core) = c
     let v = 
       core.inAct
@@ -222,11 +223,11 @@ module FullyConnected =
           let (bw, bdw) = core.biases.[x,y,i]
           (bw, bdw + dw) ) core.outAct  
       
-    }
+    }, None
 
  
 
-  let forward c (vol:Vol) (training:bool) = 
+  let forward c (vol:Vol) = 
     let (FullyConnCore core) = c
     let vw = Vol.getWs vol
     let a = 
@@ -244,7 +245,7 @@ module FullyConnected =
     FullyConnCore { core with 
       inAct = vol
       outAct = a
-    }
+    }, a
 
   let getParamsAndGrads c = 
     let (FullyConnCore core) = c

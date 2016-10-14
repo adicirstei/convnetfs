@@ -224,8 +224,8 @@ type Core =
   | LocalResponseNormalizationCore of LocalResponseNormalizationCore
   | PoolCore of PoolCore
  
-type Forward = Core -> Vol -> bool -> Core
-type Backward = Core -> Core
+type Forward = Core -> Vol -> (Core * Vol)
+type Backward = Core -> Vol option -> Core * float option
 type GetParamsAndGrads = Core -> ParamsGrads list
 
 
