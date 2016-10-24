@@ -1,3 +1,5 @@
+#load "packages/MathNet.Numerics.FSharp/MathNet.Numerics.fsx"
+
 #load "util.fsx"
 #load "convnet.fsx"
 
